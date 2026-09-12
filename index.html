@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV Generator - By Bayu</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- html2pdf.js untuk export ke PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* Ukuran Kertas A4 Presisi (210mm x 297mm) */
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      box-sizing: border-box;
+      background: #ffffff;
+      color: #1e293b;
+      overflow: hidden;
+    }
+
+    /* Variabel Warna Dinamis */
+    :root {
+      --primary-color: #00224d;
+      --accent-color: #2563eb;
+    }
+
+    .bg-theme-primary { background-color: var(--primary-color); }
+    .text-theme-primary { color: var(--primary-color); }
+    .border-theme-primary { border-color: var(--primary-color); }
+    
+    .bg-theme-accent { background-color: var(--accent-color); }
+    .text-theme-accent { color: var(--accent-color); }
+
+    /* Print Setup */
+    @media print {
+      body { background: #ffffff; margin: 0; padding: 0; }
+      body * { visibility: hidden; }
+      #cv-preview, #cv-preview * { visibility: visible; }
+      #cv-preview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-800 font-sans text-slate-100 min-h-screen">
+
+  <!-- Header / Navbar -->
+  <header class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        <i class="fa-solid fa-file-invoice text-blue-400"></i> CV Generator
+      </h1>
+      <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow flex items-center gap-2 transition">
+        <i class="fa-solid fa-download"></i> Unduh PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Container Utama -->
+  <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+    
+    <!-- KOLOM KIRI: Form Input & Kontrol Desain -->
+    <section class="space-y-6 text-slate-800">
+      
+      <!-- Pengaturan Template & Warna -->
+      <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
+          <i class="fa-solid fa-palette text-blue-900"></i> Pilih Desain & Tampilan CV
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Template</label>
+            <select id="select-template" onchange="changeTemplate(this.value)" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none text-xs font-medium">
+              <option value="modern">Modern Two-Column (Bilah Sisi)</option>
+              <option value="minimalist">Minimalist Clean (1 Kolom Profil Atas)</option>
+              <option value="corporate">Corporate Executive (Klasik & Elegan)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Aksen Warna</label>
+            <div class="flex gap-2 pt-1">
+              <button onclick="changeColor('#00224d', '#2563eb')" class="w-6 h-6 rounded-full bg-[#00224d] border-2 border-white shadow hover:scale-110 transition" title="Navy Blue"></button>
+              <button onclick="changeColor('#0f172a', '#0284c7')" class="w-6 h-6 rounded-full bg-[#0f172a] border-2 border-white shadow hover:scale-110 transition" title="Slate Gray"></button>
+              <button onclick="changeColor('#064e3b', '#059669')" class="w-6 h-6 rounded-full bg-[#064e3b] border-2 border-white shadow hover:scale-110 transition" title="Emerald Green"></button>
+              <button onclick="changeColor('#4c1d95', '#7c3aed')" class="w-6 h-6 rounded-full bg-[#4c1d95] border-2 border-white shadow hover:scale-110 transition" title="Deep Purple"></button>
+              <button onclick="changeColor('#78350f', '#d97706')" class="w-6 h-6 rounded-full bg-[#78350f] border-2 border-white shadow hover:scale-110 transition" title="Warm Amber"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Foto & Data Utama -->
+      <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
+          <i class="fa-solid fa-user text-blue-900"></i> Data Diri & Foto Profil
+        </h2>
+        
+        <div class="mb-4 p-3 bg-slate-50 border border-dashed border-slate-300 rounded-lg flex items-center gap-4">
+          <div class="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden border border-slate-300 flex-shrink-0">
+            <img id="form-photo-preview" src="" alt="" class="w-full h-full object-cover hidden">
+            <i id="form-photo-placeholder" class="fa-solid fa-user text-slate-400 text-2xl"></i>
+          </div>
+          <div class="flex-grow">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Foto Profil</label>
+            <input type="file" id="input-photo" accept="image/*" onchange="handlePhotoUpload(event)" class="block w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-900 hover:file:bg-blue-100 cursor-pointer">
+            <button id="btn-remove-photo" onclick="removePhoto()" class="text-xs text-red-500 hover:underline mt-1 hidden">Hapus Foto</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Lengkap</label>
+            <input type="text" id="input-name" placeholder="BAYU ARDIYANTO" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Judul / Spesialisasi</label>
+            <input type="text" id="input-title" placeholder="FRESH GRADUATE MANAJEMEN" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none text-xs" oninput="updateCV()">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Ringkasan Profil</label>
+            <textarea id="input-summary" rows="3" placeholder="Tuliskan ringkasan kualifikasi singkat Anda..." class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-900 outline-none text-xs" oninput="updateCV()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kontak -->
+      <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
+          <i class="fa-solid fa-address-book text-blue-900"></i> Kontak Informasi
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">No. Telepon/WA</label>
+            <input type="text" id="input-phone" placeholder="0800-0000-0000" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+            <input type="email" id="input-email" placeholder="Bayuar@email.com" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Lokasi Singkat</label>
+            <input type="text" id="input-location" placeholder="Kotabumi, Lampung Utara" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">LinkedIn</label>
+            <input type="text" id="input-linkedin" placeholder="linkedin.com/in/namamu" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Website / Portfolio Link</label>
+            <input type="text" id="input-website" placeholder="namamu.com" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill, Bahasa, Hobi -->
+      <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2 border-b pb-2">
+          <i class="fa-solid fa-list-check text-blue-900"></i> Kemampuan, Bahasa & Hobi
+        </h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Hard Skills (Pisahkan Koma)</label>
+            <input type="text" id="input-hardskills" placeholder="Microsoft Word, Microsoft Excel, Data Entry" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Soft Skills (Pisahkan Koma)</label>
+            <input type="text" id="input-softskills" placeholder="Komunikasi, Kerja Sama Tim, Adaptasi" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Bahasa (Pisahkan Koma)</label>
+            <input type="text" id="input-languages" placeholder="Indonesia (Aktif), English (Intermediate)" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Hobi (Pisahkan Koma)</label>
+            <input type="text" id="input-hobbies" placeholder="Membaca, Fotografi, Olahraga" class="w-full p-2 border rounded text-xs" oninput="updateCV()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Pengalaman Kerja -->
+      <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-briefcase text-blue-900"></i> Pengalaman Kerja / Magang
+          </h2>
+          <button onclick="addExperience()" class="text-xs bg-blue-50 text-blue-900 font-semibold px-3 py-1.5 rounded border border-blue-200 hover:bg-blue-100 transition">
+            + Tambah
+          </button>
+        </div>
+        <div id="experience-list" class="space-y-3"></div>
+      </div>
+
+      <!-- Pendidikan -->
+      <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-graduation-cap text-blue-900"></i> Pendidikan
+          </h2>
+          <button onclick="addEducation()" class="text-xs bg-blue-50 text-blue-900 font-semibold px-3 py-1.5 rounded border border-blue-200 hover:bg-blue-100 transition">
+            + Tambah
+          </button>
+        </div>
+        <div id="education-list" class="space-y-3"></div>
+      </div>
+
+    </section>
+
+    <!-- KOLOM KANAN: Live Preview CV Dinamis -->
+    <section class="flex flex-col items-center">
+      <div class="sticky top-20 w-full overflow-x-auto flex justify-center pb-8">
+        
+        <!-- Dokumen A4 CV -->
+        <div id="cv-preview" class="a4-page shadow-2xl">
+          <!-- Konten CV dirender dinamis via JavaScript sesuai template yang dipilih -->
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let experiences = [];
+    let educations = [];
+    let photoBase64 = null;
+    let currentTemplate = 'modern';
+    let primaryColor = '#00224d';
+    let accentColor = '#2563eb';
+
+    function changeTemplate(templateName) {
+      currentTemplate = templateName;
+      updateCV();
+    }
+
+    function changeColor(primary, accent) {
+      primaryColor = primary;
+      accentColor = accent;
+      document.documentElement.style.setProperty('--primary-color', primary);
+      document.documentElement.style.setProperty('--accent-color', accent);
+      updateCV();
+    }
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          photoBase64 = e.target.result;
+          document.getElementById('form-photo-preview').src = photoBase64;
+          document.getElementById('form-photo-preview').classList.remove('hidden');
+          document.getElementById('form-photo-placeholder').classList.add('hidden');
+          document.getElementById('btn-remove-photo').classList.remove('hidden');
+          updateCV();
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function removePhoto() {
+      photoBase64 = null;
+      document.getElementById('input-photo').value = '';
+      document.getElementById('form-photo-preview').src = '';
+      document.getElementById('form-photo-preview').classList.add('hidden');
+      document.getElementById('form-photo-placeholder').classList.remove('hidden');
+      document.getElementById('btn-remove-photo').classList.add('hidden');
+      updateCV();
+    }
+
+    function addExperience() {
+      const id = Date.now();
+      experiences.push({ 
+        id, 
+        company: 'PT MAJU BERSAMA INDONESIA', 
+        role: 'Intern Administrasi', 
+        period: 'Februari - Juni 2024', 
+        description: '• Mengelola dokumen dan arsip perusahaan.\n• Menginput dan memverifikasi data ke sistem internal.' 
+      });
+      renderExperienceInputs();
+      updateCV();
+    }
+
+    function removeExperience(id) {
+      experiences = experiences.filter(exp => exp.id !== id);
+      renderExperienceInputs();
+      updateCV();
+    }
+
+    function renderExperienceInputs() {
+      const container = document.getElementById('experience-list');
+      container.innerHTML = '';
+      experiences.forEach((exp) => {
+        const item = document.createElement('div');
+        item.className = 'p-3 border border-slate-200 rounded space-y-2 bg-slate-50 relative text-xs';
+        item.innerHTML = `
+          <button onclick="removeExperience(${exp.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" placeholder="Perusahaan" value="${exp.company}" oninput="updateExpData(${exp.id}, 'company', this.value)" class="p-1.5 border rounded">
+            <input type="text" placeholder="Posisi" value="${exp.role}" oninput="updateExpData(${exp.id}, 'role', this.value)" class="p-1.5 border rounded">
+          </div>
+          <input type="text" placeholder="Periode" value="${exp.period}" oninput="updateExpData(${exp.id}, 'period', this.value)" class="w-full p-1.5 border rounded">
+          <textarea placeholder="Deskripsi (Gunakan baris baru untuk poin)" oninput="updateExpData(${exp.id}, 'description', this.value)" class="w-full p-1.5 border rounded" rows="2">${exp.description}</textarea>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateExpData(id, field, value) {
+      const target = experiences.find(exp => exp.id === id);
+      if (target) {
+        target[field] = value;
+        updateCV();
+      }
+    }
+
+    function addEducation() {
+      const id = Date.now();
+      educations.push({ id, school: 'UNIVERSITAS PASUNDAN', degree: 'S1 Manajemen (IPK: 3.68)', year: '2021 - 2025' });
+      renderEducationInputs();
+      updateCV();
+    }
+
+    function removeEducation(id) {
+      educations = educations.filter(edu => edu.id !== id);
+      renderEducationInputs();
+      updateCV();
+    }
+
+    function renderEducationInputs() {
+      const container = document.getElementById('education-list');
+      container.innerHTML = '';
+      educations.forEach((edu) => {
+        const item = document.createElement('div');
+        item.className = 'p-3 border border-slate-200 rounded space-y-2 bg-slate-50 relative text-xs';
+        item.innerHTML = `
+          <button onclick="removeEducation(${edu.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" placeholder="Institusi" value="${edu.school}" oninput="updateEduData(${edu.id}, 'school', this.value)" class="p-1.5 border rounded">
+            <input type="text" placeholder="Jurusan / Detail" value="${edu.degree}" oninput="updateEduData(${edu.id}, 'degree', this.value)" class="p-1.5 border rounded">
+          </div>
+          <input type="text" placeholder="Tahun" value="${edu.year}" oninput="updateEduData(${edu.id}, 'year', this.value)" class="w-full p-1.5 border rounded">
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateEduData(id, field, value) {
+      const target = educations.find(edu => edu.id === id);
+      if (target) {
+        target[field] = value;
+        updateCV();
+      }
+    }
+
+    function getCVData() {
+      return {
+        name: document.getElementById('input-name').value || 'BAYU ARDIYANTO',
+        title: document.getElementById('input-title').value || 'FRESH GRADUATE MANAJEMEN',
+        summary: document.getElementById('input-summary').value || 'Lulusan S1 Manajemen yang memiliki ketertarikan di bidang administrasi dan operasional. Terbiasa bekerja dengan teliti, mampu bekerja secara individu maupun tim, serta berorientasi pada hasil.',
+        phone: document.getElementById('input-phone').value || '0800-0000-0000',
+        email: document.getElementById('input-email').value || 'Bayuar@email.com',
+        location: document.getElementById('input-location').value || 'Kotabumi, Lampung Utara',
+        linkedin: document.getElementById('input-linkedin').value || 'linkedin.com/in/namamu',
+        website: document.getElementById('input-website').value || 'namamu.com',
+        hardskills: (document.getElementById('input-hardskills').value || 'Microsoft Word, Microsoft Excel, Microsoft PowerPoint, Data Entry').split(',').map(s=>s.trim()).filter(Boolean),
+        softskills: (document.getElementById('input-softskills').value || 'Komunikasi, Kerja Sama Tim, Problem Solving').split(',').map(s=>s.trim()).filter(Boolean),
+        languages: (document.getElementById('input-languages').value || 'Indonesia (Aktif), English (Intermediate)').split(',').map(s=>s.trim()).filter(Boolean),
+        hobbies: (document.getElementById('input-hobbies').value || 'Membaca, Fotografi, Olahraga').split(',').map(s=>s.trim()).filter(Boolean),
+      };
+    }
+
+    // UPDATE RENDER CV BERDASARKAN TEMPLATE
+    function updateCV() {
+      const data = getCVData();
+      const container = document.getElementById('cv-preview');
+
+      if (currentTemplate === 'modern') {
+        container.className = "a4-page shadow-2xl flex flex-row";
+        container.innerHTML = renderModernTemplate(data);
+      } else if (currentTemplate === 'minimalist') {
+        container.className = "a4-page shadow-2xl p-8 flex flex-col justify-between";
+        container.innerHTML = renderMinimalistTemplate(data);
+      } else if (currentTemplate === 'corporate') {
+        container.className = "a4-page shadow-2xl flex flex-col justify-between";
+        container.innerHTML = renderCorporateTemplate(data);
+      }
+    }
+
+    // 1. TEMPLATE MODERN (Two-Column Sidebar)
+    function renderModernTemplate(data) {
+      const photoHtml = photoBase64 
+        ? `<img src="${photoBase64}" class="w-full h-full object-cover">`
+        : `<i class="fa-solid fa-user text-slate-400 text-4xl"></i>`;
+
+      return `
+        <div class="w-[32%] text-white p-5 flex flex-col justify-between flex-shrink-0" style="background-color: ${primaryColor}">
+          <div>
+            <div class="flex justify-center mb-6 mt-2">
+              <div class="w-28 h-28 rounded-full border-2 border-white overflow-hidden bg-slate-300 flex items-center justify-center shadow">
+                ${photoHtml}
+              </div>
+            </div>
+            <div class="mb-5">
+              <h3 class="text-[11px] font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-2">KONTAK</h3>
+              <ul class="text-[10px] space-y-2 text-slate-200">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-phone w-3" style="color: ${accentColor}"></i> <span>${data.phone}</span></li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-envelope w-3" style="color: ${accentColor}"></i> <span class="break-all">${data.email}</span></li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot w-3" style="color: ${accentColor}"></i> <span>${data.location}</span></li>
+                <li class="flex items-center gap-2"><i class="fa-brands fa-linkedin w-3" style="color: ${accentColor}"></i> <span class="break-all">${data.linkedin}</span></li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-globe w-3" style="color: ${accentColor}"></i> <span class="break-all">${data.website}</span></li>
+              </ul>
+            </div>
+            <div class="mb-5">
+              <h3 class="text-[11px] font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-2">KEMAMPUAN</h3>
+              <p class="text-[10px] font-bold italic mb-1 text-slate-300">Hard Skills</p>
+              <ul class="text-[10px] space-y-1 text-slate-200 list-disc list-inside mb-2">
+                ${data.hardskills.map(s => `<li>${s}</li>`).join('')}
+              </ul>
+              <p class="text-[10px] font-bold italic mb-1 text-slate-300">Soft Skills</p>
+              <ul class="text-[10px] space-y-1 text-slate-200 list-disc list-inside">
+                ${data.softskills.map(s => `<li>${s}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="mb-5">
+              <h3 class="text-[11px] font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-2">BAHASA</h3>
+              <ul class="text-[10px] space-y-1 text-slate-200 list-disc list-inside">
+                ${data.languages.map(l => `<li>${l}</li>`).join('')}
+              </ul>
+            </div>
+            <div>
+              <h3 class="text-[11px] font-bold uppercase tracking-wider border-b border-white/20 pb-1 mb-2">HOBI</h3>
+              <ul class="text-[10px] space-y-1 text-slate-200">
+                ${data.hobbies.map(h => `<li class="flex items-center gap-2"><i class="fa-solid fa-check w-3 text-xs" style="color: ${accentColor}"></i> <span>${h}</span></li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-[68%] p-6 flex flex-col justify-between">
+          <div>
+            <div class="mb-5 border-b border-slate-300 pb-3">
+              <h1 class="text-2xl font-black text-slate-900 tracking-wide uppercase">${data.name}</h1>
+              <p class="text-xs font-bold tracking-wider uppercase mt-1" style="color: ${accentColor}">${data.title}</p>
+            </div>
+            <div class="mb-5">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px]" style="background-color: ${primaryColor}">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">RINGKASAN PROFIL</h2>
+                <div class="flex-grow h-[1px] bg-slate-300"></div>
+              </div>
+              <p class="text-[11px] text-slate-700 leading-relaxed pl-7">${data.summary}</p>
+            </div>
+            <div class="mb-5">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px]" style="background-color: ${primaryColor}">
+                  <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">PENDIDIKAN</h2>
+                <div class="flex-grow h-[1px] bg-slate-300"></div>
+              </div>
+              <div class="pl-7 space-y-2">
+                ${educations.map(edu => `
+                  <div class="text-[11px]">
+                    <div class="flex justify-between font-bold text-slate-800">
+                      <span>${edu.school}</span>
+                      <span class="text-[10px] text-slate-500 font-normal">${edu.year}</span>
+                    </div>
+                    <div class="text-slate-600">${edu.degree}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="mb-5">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px]" style="background-color: ${primaryColor}">
+                  <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">PENGALAMAN KERJA</h2>
+                <div class="flex-grow h-[1px] bg-slate-300"></div>
+              </div>
+              <div class="pl-7 space-y-3">
+                ${experiences.map(exp => `
+                  <div class="text-[11px]">
+                    <div class="flex justify-between font-bold text-slate-800">
+                      <span>${exp.company}</span>
+                      <span class="text-[10px] text-slate-500 font-normal">${exp.period}</span>
+                    </div>
+                    <div class="italic text-slate-600 font-medium">${exp.role}</div>
+                    <ul class="list-disc list-inside text-slate-600 mt-1 space-y-0.5">
+                      ${exp.description ? exp.description.split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
+                    </ul>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. TEMPLATE MINIMALIST CLEAN (Single Column Layout)
+    function renderMinimalistTemplate(data) {
+      const photoHtml = photoBase64 
+        ? `<img src="${photoBase64}" class="w-20 h-20 rounded-full object-cover border-2 border-slate-300">`
+        : '';
+
+      return `
+        <div>
+          <!-- Header -->
+          <div class="flex justify-between items-center border-b-2 border-slate-800 pb-4 mb-6">
+            <div>
+              <h1 class="text-3xl font-bold tracking-tight text-slate-900 uppercase">${data.name}</h1>
+              <p class="text-sm font-semibold tracking-wide uppercase mt-1" style="color: ${accentColor}">${data.title}</p>
+            </div>
+            ${photoHtml}
+          </div>
+
+          <!-- Contact Bar -->
+          <div class="flex flex-wrap justify-between text-[10px] text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200 mb-6">
+            <span><i class="fa-solid fa-phone" style="color:${accentColor}"></i> ${data.phone}</span>
+            <span><i class="fa-solid fa-envelope" style="color:${accentColor}"></i> ${data.email}</span>
+            <span><i class="fa-solid fa-location-dot" style="color:${accentColor}"></i> ${data.location}</span>
+            <span><i class="fa-brands fa-linkedin" style="color:${accentColor}"></i> ${data.linkedin}</span>
+          </div>
+
+          <!-- Summary -->
+          <div class="mb-5">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-1 border-b border-slate-300 pb-0.5">Profil Singkat</h2>
+            <p class="text-[11px] text-slate-700 leading-relaxed mt-1.5">${data.summary}</p>
+          </div>
+
+          <!-- Experience -->
+          <div class="mb-5">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2 border-b border-slate-300 pb-0.5">Pengalaman Kerja</h2>
+            <div class="space-y-3">
+              ${experiences.map(exp => `
+                <div class="text-[11px]">
+                  <div class="flex justify-between font-bold text-slate-800">
+                    <span>${exp.company} — <span class="font-normal italic text-slate-600">${exp.role}</span></span>
+                    <span class="text-[10px] text-slate-500 font-normal">${exp.period}</span>
+                  </div>
+                  <ul class="list-disc list-inside text-slate-600 mt-1 space-y-0.5 pl-1">
+                    ${exp.description ? exp.description.split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
+                  </ul>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Education -->
+          <div class="mb-5">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2 border-b border-slate-300 pb-0.5">Pendidikan</h2>
+            <div class="space-y-2">
+              ${educations.map(edu => `
+                <div class="text-[11px] flex justify-between">
+                  <div>
+                    <span class="font-bold text-slate-800">${edu.school}</span>
+                    <span class="text-slate-600"> — ${edu.degree}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500">${edu.year}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Skills & Languages Grid -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-1 border-b border-slate-300 pb-0.5">Keahlian</h2>
+              <p class="text-[10px] text-slate-700 mt-1"><strong>Hard Skills:</strong> ${data.hardskills.join(', ')}</p>
+              <p class="text-[10px] text-slate-700 mt-1"><strong>Soft Skills:</strong> ${data.softskills.join(', ')}</p>
+            </div>
+            <div>
+              <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-1 border-b border-slate-300 pb-0.5">Bahasa & Lainnya</h2>
+              <p class="text-[10px] text-slate-700 mt-1"><strong>Bahasa:</strong> ${data.languages.join(', ')}</p>
+              <p class="text-[10px] text-slate-700 mt-1"><strong>Hobi:</strong> ${data.hobbies.join(', ')}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. TEMPLATE CORPORATE EXECUTIVE
+    function renderCorporateTemplate(data) {
+      const photoHtml = photoBase64 
+        ? `<img src="${photoBase64}" class="w-24 h-24 rounded border-2 border-white object-cover shadow-md">`
+        : '';
+
+      return `
+        <div>
+          <!-- Header Bar -->
+          <div class="p-6 text-white flex justify-between items-center" style="background-color: ${primaryColor}">
+            <div>
+              <h1 class="text-2xl font-bold tracking-wider uppercase">${data.name}</h1>
+              <p class="text-xs font-medium tracking-wide uppercase mt-1 text-slate-200">${data.title}</p>
+              <div class="flex flex-wrap gap-3 text-[10px] mt-3 text-slate-300">
+                <span><i class="fa-solid fa-phone"></i> ${data.phone}</span>
+                <span><i class="fa-solid fa-envelope"></i> ${data.email}</span>
+                <span><i class="fa-solid fa-location-dot"></i> ${data.location}</span>
+                <span><i class="fa-brands fa-linkedin"></i> ${data.linkedin}</span>
+              </div>
+            </div>
+            ${photoHtml}
+          </div>
+
+          <div class="p-6">
+            <!-- Profile -->
+            <div class="mb-5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 border-l-4 pl-2 mb-2" style="border-color: ${accentColor}">Profil Profesional</h2>
+              <p class="text-[11px] text-slate-700 leading-relaxed">${data.summary}</p>
+            </div>
+
+            <!-- Experience -->
+            <div class="mb-5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 border-l-4 pl-2 mb-2" style="border-color: ${accentColor}">Pengalaman Kerja</h2>
+              <div class="space-y-3">
+                ${experiences.map(exp => `
+                  <div class="text-[11px] border-b border-slate-100 pb-2">
+                    <div class="flex justify-between font-bold text-slate-900">
+                      <span>${exp.role} — <span style="color:${accentColor}">${exp.company}</span></span>
+                      <span class="text-[10px] text-slate-500">${exp.period}</span>
+                    </div>
+                    <ul class="list-disc list-inside text-slate-600 mt-1 space-y-0.5">
+                      ${exp.description ? exp.description.split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
+                    </ul>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Education -->
+            <div class="mb-5">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 border-l-4 pl-2 mb-2" style="border-color: ${accentColor}">Pendidikan</h2>
+              <div class="space-y-2">
+                ${educations.map(edu => `
+                  <div class="text-[11px] flex justify-between">
+                    <div>
+                      <span class="font-bold text-slate-800">${edu.school}</span>
+                      <p class="text-slate-600">${edu.degree}</p>
+                    </div>
+                    <span class="text-[10px] text-slate-500">${edu.year}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Skills Grid -->
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded border border-slate-200">
+              <div>
+                <h3 class="text-[11px] font-bold text-slate-800 mb-1">Keahlian Utama</h3>
+                <ul class="text-[10px] text-slate-600 list-disc list-inside">
+                  ${data.hardskills.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-[11px] font-bold text-slate-800 mb-1">Bahasa & Soft Skills</h3>
+                <p class="text-[10px] text-slate-600"><strong>Bahasa:</strong> ${data.languages.join(', ')}</p>
+                <p class="text-[10px] text-slate-600 mt-1"><strong>Soft Skills:</strong> ${data.softskills.join(', ')}</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+    }
+
+    // Download PDF
+    function downloadPDF() {
+      const element = document.getElementById('cv-preview');
+      const nameInput = document.getElementById('input-name').value;
+      const fileName = nameInput ? `CV_${nameInput.replace(/\s+/g, '_')}.pdf` : 'CV_Document.pdf';
+
+      const opt = {
+        margin:       0,
+        filename:     fileName,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // Init
+    addEducation();
+    addExperience();
+  </script>
+</body>
+</html>
