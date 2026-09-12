@@ -192,11 +192,11 @@
         </div>
       </div>
 
-      <!-- Pengalaman -->
+      <!-- Pengalaman Kerja -->
       <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
           <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-briefcase text-blue-900"></i> Pengalaman / Magang
+            <i class="fa-solid fa-briefcase text-blue-900"></i> Pengalaman Kerja / Magang
           </h2>
           <button onclick="addExperience()" class="text-xs bg-blue-50 text-blue-900 font-semibold px-3 py-1.5 rounded border border-blue-200 hover:bg-blue-100 transition">
             + Tambah
@@ -374,7 +374,7 @@
       return {
         name: document.getElementById('input-name').value || 'BAYU ARDIYANTO',
         title: document.getElementById('input-title').value || 'FRESH GRADUATE MANAJEMEN',
-        summary: document.getElementById('input-summary').value || 'Lulusan S1 Manajemen yang memiliki ketertarikan di bidang administrasi dan operasional. Terbiasa bekerja dengan teliti, mampu bekerja secara individu maupun tim, serta berorientasi pada hasil.',
+        summary: document.getElementById('input-summary').value || '	Manajemen yang memiliki ketertarikan di bidang administrasi dan operasional. Terbiasa bekerja dengan teliti, mampu bekerja secara individu maupun tim, serta berorientasi pada hasil.',
         phone: document.getElementById('input-phone').value || '0800-0000-0000',
         email: document.getElementById('input-email').value || 'Bayuar@email.com',
         location: document.getElementById('input-location').value || 'Kotabumi, Lampung Utara',
@@ -468,7 +468,7 @@
                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">RINGKASAN PROFIL</h2>
                 <div class="flex-grow h-[1px] bg-slate-300"></div>
               </div>
-              <p class="text-[11px] text-slate-700 leading-relaxed pl-7">${data.summary}</p>
+              <p class="text-[11px] text-slate-700 leading-relaxed text-justify">${data.summary}</p>
             </div>
             <div class="mb-5">
               <div class="flex items-center gap-2 mb-2">
@@ -495,7 +495,7 @@
                 <div class="w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px]" style="background-color: ${primaryColor}">
                   <i class="fa-solid fa-briefcase"></i>
                 </div>
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">PENGALAMAN</h2>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">PENGALAMAN KERJA</h2>
                 <div class="flex-grow h-[1px] bg-slate-300"></div>
               </div>
               <div class="pl-7 space-y-3">
@@ -546,12 +546,12 @@
           <!-- Summary -->
           <div class="mb-5">
             <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-1 border-b border-slate-300 pb-0.5">Profil Singkat</h2>
-            <p class="text-[11px] text-slate-700 leading-relaxed mt-1.5">${data.summary}</p>
+            <p class="text-[11px] text-slate-700 leading-relaxed text-justify">${data.summary}</p>
           </div>
 
           <!-- Experience -->
           <div class="mb-5">
-            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2 border-b border-slate-300 pb-0.5">Pengalaman</h2>
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2 border-b border-slate-300 pb-0.5">Pengalaman </h2>
             <div class="space-y-3">
               ${experiences.map(exp => `
                 <div class="text-[11px]">
@@ -626,8 +626,8 @@
           <div class="p-6">
             <!-- Profile -->
             <div class="mb-5">
-              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 border-l-4 pl-2 mb-2" style="border-color: ${accentColor}">Profil Profesional</h2>
-              <p class="text-[11px] text-slate-700 leading-relaxed">${data.summary}</p>
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800 border-l-4 pl-2 mb-2" style="border-color: ${accentColor}">Ringkasan Profil</h2>
+              <p class="text-[11px] text-slate-700 leading-relaxed text-justify">${data.summary}</p>
             </div>
 
             <!-- Experience -->
