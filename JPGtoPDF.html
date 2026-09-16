@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Content Security Policy untuk mencegah injeksi script yang tidak diinginkan -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com;">
   <title>Konverter JPG ke PDF Modern</title>
   
   <!-- Tailwind CSS CDN -->
@@ -33,7 +35,7 @@
         <div id="uploadPlaceholder" class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
           <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 group-hover:text-indigo-600 group-hover:scale-110 transition mb-2"></i>
           <p class="text-xs sm:text-sm text-slate-600 font-medium">Klik untuk unggah atau seret file ke sini</p>
-          <p class="text-xs text-slate-400 mt-1">Format: JPG atau JPEG</p>
+          <p class="text-xs text-slate-400 mt-1">Format: JPG atau JPEG (Maks. 10MB)</p>
         </div>
 
         <!-- Image Preview Container -->
@@ -55,7 +57,7 @@
         <i class="fa-solid fa-download"></i>
         <span>Unduh File PDF</span>
       </button>
-	  <button onclick="window.location.href='index.html'" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+      <button onclick="window.location.href='index.html'" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition active:scale-[0.98]">
         <i class="fa-solid fa-home"></i>
         <span>Kembali Membuat CV</span>
       </button>
@@ -66,26 +68,46 @@
   </div>
 
   <script>
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // Limit 10 MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg'];
+    let objectUrl = null;
+
     function handleFileSelect(event) {
       const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.getElementById('previewImage');
-          const placeholder = document.getElementById('uploadPlaceholder');
-          const fileInfo = document.getElementById('fileInfo');
-          const fileName = document.getElementById('fileName');
+      if (!file) return;
 
-          preview.src = e.target.result;
-          preview.classList.remove('hidden');
-          placeholder.classList.add('hidden');
-          
-          fileName.textContent = file.name;
-          fileInfo.classList.remove('hidden');
-          fileInfo.classList.add('flex');
-        };
-        reader.readAsDataURL(file);
+      // Validasi tipe file
+      if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+        alert('Format file tidak valid! Harap pilih gambar dengan format JPG atau JPEG.');
+        clearSelection();
+        return;
       }
+
+      // Validasi ukuran file
+      if (file.size > MAX_FILE_SIZE) {
+        alert('Ukuran file terlalu besar! Maksimal ukuran file adalah 10MB.');
+        clearSelection();
+        return;
+      }
+
+      // Bersihkan memory URL lama jika ada
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+
+      objectUrl = URL.createObjectURL(file);
+      const preview = document.getElementById('previewImage');
+      const placeholder = document.getElementById('uploadPlaceholder');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+
+      preview.src = objectUrl;
+      preview.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      
+      fileName.textContent = file.name;
+      fileInfo.classList.remove('hidden');
+      fileInfo.classList.add('flex');
     }
 
     function clearSelection() {
@@ -94,6 +116,11 @@
       const placeholder = document.getElementById('uploadPlaceholder');
       const fileInfo = document.getElementById('fileInfo');
       
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+      }
+
       input.value = '';
       preview.src = '';
       preview.classList.add('hidden');
@@ -110,23 +137,40 @@
       }
 
       const file = input.files[0];
-      const reader = new FileReader();
 
-      reader.onload = function(e) {
-        const img = new Image();
-        img.src = e.target.result;
+      // Re-validate keamanan file saat eksekusi konversi
+      if (!ALLOWED_TYPES.includes(file.type.toLowerCase()) || file.size > MAX_FILE_SIZE) {
+        alert('File tidak valid atau melebihi batas ukuran.');
+        return;
+      }
 
-        img.onload = function() {
+      const img = new Image();
+      const currentUrl = URL.createObjectURL(file);
+
+      img.onload = function() {
+        try {
           const { jsPDF } = window.jspdf;
           const orientation = img.width > img.height ? 'l' : 'p';
           const pdf = new jsPDF(orientation, 'px', [img.width, img.height]);
 
           pdf.addImage(img, 'JPEG', 0, 0, img.width, img.height);
-          pdf.save(file.name.replace(/\.[^/.]+$/, "") + ".pdf");
-        };
+          
+          // Sanitasi nama file output
+          const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_").replace(/\.[^/.]+$/, "");
+          pdf.save(safeName + ".pdf");
+        } catch (err) {
+          alert('Gagal mengonversi file. Pastikan gambar tidak rusak.');
+        } finally {
+          URL.revokeObjectURL(currentUrl);
+        }
       };
 
-      reader.readAsDataURL(file);
+      img.onerror = function() {
+        alert('Gambar rusak atau tidak dapat dimuat.');
+        URL.revokeObjectURL(currentUrl);
+      };
+
+      img.src = currentUrl;
     }
   </script>
 </body>
