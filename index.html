@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="id" class="h-full bg-slate-900">
+<html lang="id" class="h-full bg-slate-950 text-slate-100">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>CV Generator Pro - By Bayu</title>
   
   <!-- Tailwind CSS CDN -->
@@ -25,6 +25,9 @@
         extend: {
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          },
+          screens: {
+            'xs': '475px',
           }
         }
       }
@@ -38,34 +41,35 @@
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: #090d16;
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
+      background: #1e293b;
+      border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
+      background: #334155;
     }
 
     /* Ukuran Kertas A4 Presisi (210mm x 297mm) */
     .a4-page {
-	width: 210mm;
-	min-width: 210mm;
-	height: 297mm;
-	min-height: 297mm;
-	box-sizing: border-box;
-	background-color: #ffffff !important; /* Wajib !important agar latar tidak transparan/hitam */
-	color: #1e293b;
-	overflow: hidden;
-	margin: 0 auto;
-	position: relative;
-}
+      width: 210mm;
+      min-width: 210mm;
+      height: 297mm;
+      min-height: 297mm;
+      box-sizing: border-box;
+      background-color: #ffffff !important;
+      color: #1e293b;
+      overflow: hidden;
+      margin: 0 auto;
+      position: relative;
+    }
 
     /* Variabel Warna Dinamis */
     :root {
       --primary-color: #00224d;
       --accent-color: #2563eb;
+      --preview-scale: 0.8;
     }
 
     .bg-theme-primary { background-color: var(--primary-color); }
@@ -95,102 +99,123 @@
     /* Floating Loading Overlay */
     #loading-overlay {
       display: none;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
     }
     #loading-overlay.active {
       display: flex;
     }
 
-    /* Container Zoom / Preview Responsive Scaling */
-	.preview-scaler, #cv-preview {
-	transform-origin: top center;
-	}
+    /* Dynamic Scaling Wrapper for Responsive Live Preview */
+    .preview-stage {
+      width: calc(210mm * var(--preview-scale));
+      height: calc(297mm * var(--preview-scale));
+      position: relative;
+      transition: width 0.2s ease, height 0.2s ease;
+    }
 
-	/* Penyesuaian Skala Kertas A4 berdasarkan Layar */
-	@media (min-width: 1280px) {
-	#cv-preview {
-    transform: scale(0.72);
-    margin-bottom: -80mm; /* Mengurangi ruang kosong akibat scaling */
-  }
-}
+    #cv-preview {
+      transform: scale(var(--preview-scale));
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
 
-@media (max-width: 1279px) and (min-width: 1024px) {
-  #cv-preview {
-    transform: scale(0.55);
-    margin-bottom: -130mm;
-  }
-}
-
-@media (max-width: 1023px) {
-  #cv-preview {
-    transform: scale(0.48);
-    margin-bottom: -150mm;
-  }
-}
+    /* Responsive Scaling Calculations */
+    @media (max-width: 480px) {
+      :root { --preview-scale: 0.38; }
+    }
+    @media (min-width: 481px) and (max-width: 640px) {
+      :root { --preview-scale: 0.48; }
+    }
+    @media (min-width: 641px) and (max-width: 1023px) {
+      :root { --preview-scale: 0.62; }
+    }
+    @media (min-width: 1024px) and (max-width: 1279px) {
+      :root { --preview-scale: 0.52; }
+    }
+    @media (min-width: 1280px) and (max-width: 1535px) {
+      :root { --preview-scale: 0.68; }
+    }
+    @media (min-width: 1536px) {
+      :root { --preview-scale: 0.82; }
+    }
   </style>
 </head>
-<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-950 font-sans text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
 
   <!-- Loading Overlay untuk Export JPG -->
-  <div id="loading-overlay" class="fixed inset-0 bg-slate-950/80 z-[100] flex-col items-center justify-center gap-3">
-    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    <p class="text-white font-semibold text-sm">Menyiapkan Gambar JPG...</p>
-    <p class="text-slate-400 text-xs">Mohon tunggu sebentar</p>
+  <div id="loading-overlay" class="fixed inset-0 bg-slate-950/85 z-[100] flex-col items-center justify-center gap-4 p-4 text-center">
+    <div class="relative flex items-center justify-center">
+      <div class="w-14 h-14 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      <i class="fa-solid fa-file-image text-blue-400 absolute text-lg"></i>
+    </div>
+    <div class="space-y-1">
+      <p class="text-white font-bold text-base tracking-wide">Menyiapkan Gambar JPG...</p>
+      <p class="text-slate-400 text-xs">Mohon tunggu sebentar, sedang merender dokumen A4</p>
+    </div>
   </div>
 
   <!-- Header / Navbar -->
-  <header class="bg-slate-900/90 backdrop-blur-md text-white p-4 sticky top-0 z-40 border-b border-slate-800 shadow-md">
-    <div class="max-w-7xl mx-auto flex justify-between items-center px-2 sm:px-4">
+  <header class="bg-slate-900/80 backdrop-blur-xl text-white sticky top-0 z-40 border-b border-slate-800/80 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center gap-2">
+      
+      <!-- Brand Logo -->
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+        <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0">
           <i class="fa-solid fa-file-invoice text-lg"></i>
         </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            CV Generator <span class="text-xs font-normal text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800/50">Pro</span>
+        <div class="hidden xs:block">
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+            CV Generator <span class="text-[10px] font-semibold tracking-wider uppercase text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded-full border border-blue-800/60">Pro</span>
           </h1>
-          <p class="text-[10px] text-slate-400 hidden sm:block">Buat CV Profesional Siap Kirim</p>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Buat CV Profesional Siap Kirim</p>
         </div>
       </div>
       
-      <div class="flex items-center gap-3">
-        <!-- Toggle Button View Mode di Mobile/Tablet -->
-        <div class="flex lg:hidden bg-slate-800 p-1 rounded-lg border border-slate-700">
-          <button id="btn-tab-form" onclick="switchTab('form')" class="px-3 py-1 text-xs font-semibold rounded-md bg-blue-600 text-white transition">
-            <i class="fa-solid fa-pen-to-square mr-1"></i> Form
+      <!-- Actions Button -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Toggle Button View Mode Mobile & Tablet -->
+        <div class="flex lg:hidden bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button id="btn-tab-form" onclick="switchTab('form')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-md transition-all duration-200">
+            <i class="fa-solid fa-pen-to-square mr-1.5"></i> Form
           </button>
-          <button id="btn-tab-preview" onclick="switchTab('preview')" class="px-3 py-1 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition">
-            <i class="fa-solid fa-eye mr-1"></i> Preview
+          <button id="btn-tab-preview" onclick="switchTab('preview')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all duration-200">
+            <i class="fa-solid fa-eye mr-1.5"></i> Preview
           </button>
         </div>
-		<button onclick="window.location.href='JPGtoPDF.html'" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/20 flex items-center gap-2 transition active:scale-95">
-			<i class="fa-solid fa-download"></i>
-			<span>JPG ke PDF</span>
-		</button>
-        <button onclick="downloadJPG()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/20 flex items-center gap-2 transition active:scale-95">
+
+        <button onclick="window.location.href='JPGtoPDF.html'" class="hidden xs:flex bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 px-3.5 py-2 rounded-xl font-semibold text-xs transition-all duration-200 active:scale-95 items-center gap-2">
+          <i class="fa-solid fa-file-pdf text-red-400"></i>
+          <span>JPG ke PDF</span>
+        </button>
+
+        <button onclick="downloadJPG()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/25 flex items-center gap-2 transition-all duration-200 active:scale-95">
           <i class="fa-solid fa-download"></i>
-          <span>Unduh JPG</span>
+          <span class="hidden sm:inline">Unduh JPG</span>
+          <span class="sm:hidden">Unduh</span>
         </button>
       </div>
+
     </div>
   </header>
 
   <!-- Container Utama -->
-  <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-grow">
     
     <!-- KOLOM KIRI: Form Input & Kontrol Desain -->
     <section id="section-form" class="lg:col-span-6 space-y-6 text-slate-800 block">
       
       <!-- Pengaturan Template & Warna -->
-      <div class="bg-slate-800/60 backdrop-blur border border-slate-700/80 p-5 rounded-2xl shadow-xl">
-        <h2 class="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700/60 pb-3">
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-xl space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
           <i class="fa-solid fa-palette text-blue-400"></i> Pilih Desain & Tampilan CV
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1.5">Pilih Template</label>
-            <select id="select-template" onchange="changeTemplate(this.value)" class="w-full p-2.5 bg-slate-900 border border-slate-700 text-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-xs font-medium transition">
+            <select id="select-template" onchange="changeTemplate(this.value)" class="w-full p-2.5 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-xs font-medium transition-all">
               <option value="modern">Modern Two-Column (Bilah Sisi)</option>
               <option value="minimalist">Minimalist Clean (1 Kolom Profil Atas)</option>
               <option value="corporate">Corporate Executive (Klasik & Elegan)</option>
@@ -199,114 +224,114 @@
 
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1.5">Aksen Warna</label>
-            <div class="flex gap-2.5 pt-1">
-              <button onclick="changeColor('#00224d', '#2563eb')" class="w-7 h-7 rounded-full bg-[#00224d] border-2 border-slate-600 hover:border-white shadow-md hover:scale-110 transition" title="Navy Blue"></button>
-              <button onclick="changeColor('#0f172a', '#0284c7')" class="w-7 h-7 rounded-full bg-[#0f172a] border-2 border-slate-600 hover:border-white shadow-md hover:scale-110 transition" title="Slate Gray"></button>
-              <button onclick="changeColor('#064e3b', '#059669')" class="w-7 h-7 rounded-full bg-[#064e3b] border-2 border-slate-600 hover:border-white shadow-md hover:scale-110 transition" title="Emerald Green"></button>
-              <button onclick="changeColor('#4c1d95', '#7c3aed')" class="w-7 h-7 rounded-full bg-[#4c1d95] border-2 border-slate-600 hover:border-white shadow-md hover:scale-110 transition" title="Deep Purple"></button>
-              <button onclick="changeColor('#78350f', '#d97706')" class="w-7 h-7 rounded-full bg-[#78350f] border-2 border-slate-600 hover:border-white shadow-md hover:scale-110 transition" title="Warm Amber"></button>
+            <div class="flex items-center gap-2.5 pt-0.5">
+              <button onclick="changeColor('#00224d', '#2563eb')" class="w-8 h-8 rounded-full bg-[#00224d] border-2 border-slate-700 hover:border-white shadow-md hover:scale-110 active:scale-95 transition-all" title="Navy Blue"></button>
+              <button onclick="changeColor('#0f172a', '#0284c7')" class="w-8 h-8 rounded-full bg-[#0f172a] border-2 border-slate-700 hover:border-white shadow-md hover:scale-110 active:scale-95 transition-all" title="Slate Gray"></button>
+              <button onclick="changeColor('#064e3b', '#059669')" class="w-8 h-8 rounded-full bg-[#064e3b] border-2 border-slate-700 hover:border-white shadow-md hover:scale-110 active:scale-95 transition-all" title="Emerald Green"></button>
+              <button onclick="changeColor('#4c1d95', '#7c3aed')" class="w-8 h-8 rounded-full bg-[#4c1d95] border-2 border-slate-700 hover:border-white shadow-md hover:scale-110 active:scale-95 transition-all" title="Deep Purple"></button>
+              <button onclick="changeColor('#78350f', '#d97706')" class="w-8 h-8 rounded-full bg-[#78350f] border-2 border-slate-700 hover:border-white shadow-md hover:scale-110 active:scale-95 transition-all" title="Warm Amber"></button>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Upload Foto & Data Utama -->
-      <div class="bg-slate-800/60 backdrop-blur border border-slate-700/80 p-5 rounded-2xl shadow-xl">
-        <h2 class="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700/60 pb-3">
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-xl space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
           <i class="fa-solid fa-user text-blue-400"></i> Data Diri & Foto Profil
         </h2>
         
-        <div class="mb-4 p-3.5 bg-slate-900/80 border border-dashed border-slate-700 rounded-xl flex items-center gap-4">
-          <div class="w-16 h-16 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+        <div class="p-3.5 bg-slate-950/80 border border-dashed border-slate-800 rounded-xl flex items-center gap-4">
+          <div class="w-16 h-16 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0 relative shadow-inner">
             <img id="form-photo-preview" src="" alt="" class="w-full h-full object-cover hidden">
-            <i id="form-photo-placeholder" class="fa-solid fa-user text-slate-500 text-2xl"></i>
+            <i id="form-photo-placeholder" class="fa-solid fa-user text-slate-600 text-2xl"></i>
           </div>
-          <div class="flex-grow">
+          <div class="flex-grow min-w-0">
             <label class="block text-xs font-semibold text-slate-300 mb-1">Foto Profil</label>
             <input type="file" id="input-photo" accept="image/*" onchange="handlePhotoUpload(event)" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/30 cursor-pointer">
-            <button id="btn-remove-photo" onclick="removePhoto()" class="text-xs text-red-400 hover:text-red-300 hover:underline mt-1.5 hidden flex items-center gap-1">
+            <button id="btn-remove-photo" onclick="removePhoto()" class="text-xs text-red-400 hover:text-red-300 hover:underline mt-1.5 hidden flex items-center gap-1 font-medium">
               <i class="fa-solid fa-trash text-[10px]"></i> Hapus Foto
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap</label>
-            <input type="text" id="input-name" placeholder="BAYU ARDIYANTO" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-name" placeholder="BAYU ARDIYANTO" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Judul / Spesialisasi</label>
-            <input type="text" id="input-title" placeholder="FRESH GRADUATE MANAJEMEN" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-title" placeholder="FRESH GRADUATE MANAJEMEN" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
-          <div class="md:col-span-2">
+          <div class="sm:col-span-2">
             <label class="block text-xs font-medium text-slate-300 mb-1">Ringkasan Profil</label>
-            <textarea id="input-summary" rows="3" placeholder="Tuliskan ringkasan kualifikasi singkat Anda..." class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none" oninput="updateCV()"></textarea>
+            <textarea id="input-summary" rows="3" placeholder="Tuliskan ringkasan kualifikasi singkat Anda..." class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-all" oninput="updateCV()"></textarea>
           </div>
         </div>
       </div>
 
       <!-- Kontak -->
-      <div class="bg-slate-800/60 backdrop-blur border border-slate-700/80 p-5 rounded-2xl shadow-xl">
-        <h2 class="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700/60 pb-3">
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-xl space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
           <i class="fa-solid fa-address-book text-blue-400"></i> Kontak Informasi
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">No. Telepon/WA</label>
-            <input type="text" id="input-phone" placeholder="0800-0000-0000" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-phone" placeholder="0800-0000-0000" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Email</label>
-            <input type="email" id="input-email" placeholder="Bayuar@email.com" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="email" id="input-email" placeholder="Bayuar@email.com" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Lokasi Singkat</label>
-            <input type="text" id="input-location" placeholder="Kotabumi, Lampung Utara" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-location" placeholder="Kotabumi, Lampung Utara" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">LinkedIn</label>
-            <input type="text" id="input-linkedin" placeholder="linkedin.com/in/namamu" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-linkedin" placeholder="linkedin.com/in/namamu" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
-          <div class="md:col-span-2">
+          <div class="sm:col-span-2">
             <label class="block text-xs font-medium text-slate-300 mb-1">Website / Portfolio Link</label>
-            <input type="text" id="input-website" placeholder="namamu.com" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-website" placeholder="namamu.com" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
         </div>
       </div>
 
       <!-- Skill, Bahasa, Hobi -->
-      <div class="bg-slate-800/60 backdrop-blur border border-slate-700/80 p-5 rounded-2xl shadow-xl">
-        <h2 class="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-700/60 pb-3">
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-xl space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-3">
           <i class="fa-solid fa-list-check text-blue-400"></i> Kemampuan, Bahasa & Hobi
         </h2>
         <div class="space-y-3.5">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Hard Skills (Pisahkan Koma)</label>
-            <input type="text" id="input-hardskills" placeholder="Microsoft Word, Microsoft Excel, Data Entry" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-hardskills" placeholder="Microsoft Word, Microsoft Excel, Data Entry" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Soft Skills (Pisahkan Koma)</label>
-            <input type="text" id="input-softskills" placeholder="Komunikasi, Kerja Sama Tim, Adaptasi" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-softskills" placeholder="Komunikasi, Kerja Sama Tim, Adaptasi" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Bahasa (Pisahkan Koma)</label>
-            <input type="text" id="input-languages" placeholder="Indonesia (Aktif), English (Intermediate)" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-languages" placeholder="Indonesia (Aktif), English (Intermediate)" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Hobi (Pisahkan Koma)</label>
-            <input type="text" id="input-hobbies" placeholder="Membaca, Fotografi, Olahraga" class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none" oninput="updateCV()">
+            <input type="text" id="input-hobbies" placeholder="Membaca, Fotografi, Olahraga" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 outline-none transition-all" oninput="updateCV()">
           </div>
         </div>
       </div>
 
       <!-- Pengalaman -->
-      <div class="bg-slate-800/60 backdrop-blur border border-slate-700/80 p-5 rounded-2xl shadow-xl">
-        <div class="flex justify-between items-center mb-4 border-b border-slate-700/60 pb-3">
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-xl">
+        <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
             <i class="fa-solid fa-briefcase text-blue-400"></i> Pengalaman / Magang
           </h2>
-          <button onclick="addExperience()" class="text-xs bg-blue-600/20 text-blue-400 font-semibold px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-600 hover:text-white transition flex items-center gap-1">
+          <button onclick="addExperience()" class="text-xs bg-blue-600/20 text-blue-400 font-semibold px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all active:scale-95 flex items-center gap-1.5">
             <i class="fa-solid fa-plus text-[10px]"></i> Tambah
           </button>
         </div>
@@ -314,12 +339,12 @@
       </div>
 
       <!-- Pendidikan -->
-      <div class="bg-slate-800/60 backdrop-blur border border-slate-700/80 p-5 rounded-2xl shadow-xl">
-        <div class="flex justify-between items-center mb-4 border-b border-slate-700/60 pb-3">
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+      <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 p-4 sm:p-5 rounded-2xl shadow-xl">
+        <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
             <i class="fa-solid fa-graduation-cap text-blue-400"></i> Pendidikan
           </h2>
-          <button onclick="addEducation()" class="text-xs bg-blue-600/20 text-blue-400 font-semibold px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-600 hover:text-white transition flex items-center gap-1">
+          <button onclick="addEducation()" class="text-xs bg-blue-600/20 text-blue-400 font-semibold px-3 py-1.5 rounded-lg border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all active:scale-95 flex items-center gap-1.5">
             <i class="fa-solid fa-plus text-[10px]"></i> Tambah
           </button>
         </div>
@@ -329,28 +354,30 @@
     </section>
 
    <!-- KOLOM KANAN: Live Preview CV Dinamis -->
-<section id="section-preview" class="lg:col-span-6 lg:flex flex-col items-center hidden lg:block w-full">
-  <div class="sticky top-20 w-full flex flex-col items-center">
-    
-    <!-- Info Header Preview -->
-    <div class="mb-3 flex items-center justify-between w-full max-w-full text-xs text-slate-400 px-2">
-      <span class="flex items-center gap-1.5"><i class="fa-solid fa-file-image text-blue-400"></i> Format A4 Presisi (JPG)</span>
-      <span class="bg-slate-800 px-2.5 py-1 rounded border border-slate-700 text-slate-300">Live Preview</span>
-    </div>
-
-    <!-- Scrollable Outer Wrapper -->
-    <div class="w-full overflow-x-auto flex justify-center pb-8 pt-2">
-      <!-- Scaler Inner Wrapper (Mencegah elemen terpotong) -->
-      <div class="flex justify-center items-start min-w-max px-4">
-        <!-- Dokumen A4 CV -->
-        <div id="cv-preview" class="a4-page shadow-2xl rounded-sm origin-top transition-transform duration-200">
-          <!-- Konten CV dirender dinamis via JavaScript -->
+    <section id="section-preview" class="lg:col-span-6 flex-col items-center hidden lg:flex w-full min-w-0">
+      <div class="sticky top-20 w-full flex flex-col items-center">
+        
+        <!-- Info Header Preview -->
+        <div class="mb-3 flex items-center justify-between w-full text-xs text-slate-400 px-1">
+          <span class="flex items-center gap-1.5 font-medium"><i class="fa-solid fa-file-image text-blue-400"></i> Format A4 Presisi (JPG)</span>
+          <span class="bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800 text-slate-300 font-medium text-[11px] flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Preview
+          </span>
         </div>
-      </div>
-    </div>
 
-  </div>
-</section>
+        <!-- Scrollable Outer Wrapper -->
+        <div class="w-full overflow-x-auto flex justify-center py-2 bg-slate-900/40 border border-slate-800/60 rounded-2xl">
+          <!-- Dynamic Scale Stage Container -->
+          <div class="preview-stage shadow-2xl rounded-sm">
+            <!-- Dokumen A4 CV -->
+            <div id="cv-preview" class="a4-page shadow-2xl rounded-sm">
+              <!-- Konten CV dirender dinamis via JavaScript -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
 
   </main>
 
@@ -362,6 +389,17 @@
     let primaryColor = '#00224d';
     let accentColor = '#2563eb';
 
+    // FUNGSI SANITASI XSS (HTML ESCAPING)
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     // Switch Tab Mode di Layar Kecil / Mobile
     function switchTab(tab) {
       const formSec = document.getElementById('section-form');
@@ -371,14 +409,18 @@
 
       if (tab === 'form') {
         formSec.classList.remove('hidden');
+        formSec.classList.add('block');
         prevSec.classList.add('hidden');
-        btnForm.className = "px-3 py-1 text-xs font-semibold rounded-md bg-blue-600 text-white transition";
-        btnPrev.className = "px-3 py-1 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition";
+        prevSec.classList.remove('flex');
+        btnForm.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-md transition-all duration-200";
+        btnPrev.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all duration-200";
       } else {
         formSec.classList.add('hidden');
+        formSec.classList.remove('block');
         prevSec.classList.remove('hidden');
-        btnPrev.className = "px-3 py-1 text-xs font-semibold rounded-md bg-blue-600 text-white transition";
-        btnForm.className = "px-3 py-1 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition";
+        prevSec.classList.add('flex');
+        btnPrev.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-md transition-all duration-200";
+        btnForm.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white transition-all duration-200";
       }
     }
 
@@ -398,6 +440,11 @@
     function handlePhotoUpload(event) {
       const file = event.target.files[0];
       if (file) {
+        // Validasi tipe file agar hanya gambar
+        if (!file.type.startsWith('image/')) {
+          alert('Mohon unggah file gambar yang valid.');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           photoBase64 = e.target.result;
@@ -445,17 +492,17 @@
       container.innerHTML = '';
       experiences.forEach((exp) => {
         const item = document.createElement('div');
-        item.className = 'p-3.5 bg-slate-900/80 border border-slate-700/80 rounded-xl space-y-2 relative text-xs';
+        item.className = 'p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 relative text-xs';
         item.innerHTML = `
           <button onclick="removeExperience(${exp.id})" class="absolute top-3 right-3 text-red-400 hover:text-red-300 p-1">
             <i class="fa-solid fa-trash"></i>
           </button>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
-            <input type="text" placeholder="Perusahaan" value="${exp.company}" oninput="updateExpData(${exp.id}, 'company', this.value)" class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200">
-            <input type="text" placeholder="Posisi" value="${exp.role}" oninput="updateExpData(${exp.id}, 'role', this.value)" class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200">
+            <input type="text" placeholder="Perusahaan" value="${escapeHTML(exp.company)}" oninput="updateExpData(${exp.id}, 'company', this.value)" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500">
+            <input type="text" placeholder="Posisi" value="${escapeHTML(exp.role)}" oninput="updateExpData(${exp.id}, 'role', this.value)" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500">
           </div>
-          <input type="text" placeholder="Periode" value="${exp.period}" oninput="updateExpData(${exp.id}, 'period', this.value)" class="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200">
-          <textarea placeholder="Deskripsi (Gunakan baris baru untuk poin)" oninput="updateExpData(${exp.id}, 'description', this.value)" class="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 resize-none" rows="2">${exp.description}</textarea>
+          <input type="text" placeholder="Periode" value="${escapeHTML(exp.period)}" oninput="updateExpData(${exp.id}, 'period', this.value)" class="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500">
+          <textarea placeholder="Deskripsi (Gunakan baris baru untuk poin)" oninput="updateExpData(${exp.id}, 'description', this.value)" class="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 resize-none focus:outline-none focus:border-blue-500" rows="2">${escapeHTML(exp.description)}</textarea>
         `;
         container.appendChild(item);
       });
@@ -487,16 +534,16 @@
       container.innerHTML = '';
       educations.forEach((edu) => {
         const item = document.createElement('div');
-        item.className = 'p-3.5 bg-slate-900/80 border border-slate-700/80 rounded-xl space-y-2 relative text-xs';
+        item.className = 'p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 relative text-xs';
         item.innerHTML = `
           <button onclick="removeEducation(${edu.id})" class="absolute top-3 right-3 text-red-400 hover:text-red-300 p-1">
             <i class="fa-solid fa-trash"></i>
           </button>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pr-6">
-            <input type="text" placeholder="Institusi" value="${edu.school}" oninput="updateEduData(${edu.id}, 'school', this.value)" class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200">
-            <input type="text" placeholder="Jurusan / Detail" value="${edu.degree}" oninput="updateEduData(${edu.id}, 'degree', this.value)" class="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200">
+            <input type="text" placeholder="Institusi" value="${escapeHTML(edu.school)}" oninput="updateEduData(${edu.id}, 'school', this.value)" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500">
+            <input type="text" placeholder="Jurusan / Detail" value="${escapeHTML(edu.degree)}" oninput="updateEduData(${edu.id}, 'degree', this.value)" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500">
           </div>
-          <input type="text" placeholder="Tahun" value="${edu.year}" oninput="updateEduData(${edu.id}, 'year', this.value)" class="w-full p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200">
+          <input type="text" placeholder="Tahun" value="${escapeHTML(edu.year)}" oninput="updateEduData(${edu.id}, 'year', this.value)" class="w-full p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 focus:outline-none focus:border-blue-500">
         `;
         container.appendChild(item);
       });
@@ -512,18 +559,18 @@
 
     function getCVData() {
       return {
-        name: document.getElementById('input-name').value || 'BAYU ARDIYANTO',
-        title: document.getElementById('input-title').value || 'FRESH GRADUATE MANAJEMEN',
-        summary: document.getElementById('input-summary').value || 'Lulusan Manajemen yang memiliki ketertarikan di bidang administrasi dan operasional. Terbiasa bekerja dengan teliti, mampu bekerja secara individu maupun tim, serta berorientasi pada hasil.',
-        phone: document.getElementById('input-phone').value || '0800-0000-0000',
-        email: document.getElementById('input-email').value || 'Bayuar@email.com',
-        location: document.getElementById('input-location').value || 'Kotabumi, Lampung Utara',
-        linkedin: document.getElementById('input-linkedin').value || 'linkedin.com/in/namamu',
-        website: document.getElementById('input-website').value || 'namamu.com',
-        hardskills: (document.getElementById('input-hardskills').value || 'Microsoft Word, Microsoft Excel, Microsoft PowerPoint, Data Entry').split(',').map(s=>s.trim()).filter(Boolean),
-        softskills: (document.getElementById('input-softskills').value || 'Komunikasi, Kerja Sama Tim, Problem Solving').split(',').map(s=>s.trim()).filter(Boolean),
-        languages: (document.getElementById('input-languages').value || 'Indonesia (Aktif), English (Intermediate)').split(',').map(s=>s.trim()).filter(Boolean),
-        hobbies: (document.getElementById('input-hobbies').value || 'Membaca, Fotografi, Olahraga').split(',').map(s=>s.trim()).filter(Boolean),
+        name: escapeHTML(document.getElementById('input-name').value || 'BAYU ARDIYANTO'),
+        title: escapeHTML(document.getElementById('input-title').value || 'FRESH GRADUATE MANAJEMEN'),
+        summary: escapeHTML(document.getElementById('input-summary').value || 'Lulusan Manajemen yang memiliki ketertarikan di bidang administrasi dan operasional. Terbiasa bekerja dengan teliti, mampu bekerja secara individu maupun tim, serta berorientasi pada hasil.'),
+        phone: escapeHTML(document.getElementById('input-phone').value || '0800-0000-0000'),
+        email: escapeHTML(document.getElementById('input-email').value || 'Bayuar@email.com'),
+        location: escapeHTML(document.getElementById('input-location').value || 'Kotabumi, Lampung Utara'),
+        linkedin: escapeHTML(document.getElementById('input-linkedin').value || 'linkedin.com/in/namamu'),
+        website: escapeHTML(document.getElementById('input-website').value || 'namamu.com'),
+        hardskills: (document.getElementById('input-hardskills').value || 'Microsoft Word, Microsoft Excel, Microsoft PowerPoint, Data Entry').split(',').map(s => escapeHTML(s.trim())).filter(Boolean),
+        softskills: (document.getElementById('input-softskills').value || 'Komunikasi, Kerja Sama Tim, Problem Solving').split(',').map(s => escapeHTML(s.trim())).filter(Boolean),
+        languages: (document.getElementById('input-languages').value || 'Indonesia (Aktif), English (Intermediate)').split(',').map(s => escapeHTML(s.trim())).filter(Boolean),
+        hobbies: (document.getElementById('input-hobbies').value || 'Membaca, Fotografi, Olahraga').split(',').map(s => escapeHTML(s.trim())).filter(Boolean),
       };
     }
 
@@ -622,10 +669,10 @@
                 ${educations.map(edu => `
                   <div class="text-[11px]">
                     <div class="flex justify-between font-bold text-slate-800">
-                      <span>${edu.school}</span>
-                      <span class="text-[10px] text-slate-500 font-normal">${edu.year}</span>
+                      <span>${escapeHTML(edu.school)}</span>
+                      <span class="text-[10px] text-slate-500 font-normal">${escapeHTML(edu.year)}</span>
                     </div>
-                    <div class="text-slate-600">${edu.degree}</div>
+                    <div class="text-slate-600">${escapeHTML(edu.degree)}</div>
                   </div>
                 `).join('')}
               </div>
@@ -642,12 +689,12 @@
                 ${experiences.map(exp => `
                   <div class="text-[11px]">
                     <div class="flex justify-between font-bold text-slate-800">
-                      <span>${exp.company}</span>
-                      <span class="text-[10px] text-slate-500 font-normal">${exp.period}</span>
+                      <span>${escapeHTML(exp.company)}</span>
+                      <span class="text-[10px] text-slate-500 font-normal">${escapeHTML(exp.period)}</span>
                     </div>
-                    <div class="italic text-slate-600 font-medium">${exp.role}</div>
+                    <div class="italic text-slate-600 font-medium">${escapeHTML(exp.role)}</div>
                     <ul class="list-disc list-inside text-slate-600 mt-1 space-y-0.5">
-                      ${exp.description ? exp.description.split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
+                      ${exp.description ? escapeHTML(exp.description).split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
                     </ul>
                   </div>
                 `).join('')}
@@ -697,11 +744,11 @@
                 ${experiences.map(exp => `
                   <div class="text-[11px]">
                     <div class="flex justify-between font-bold text-slate-800">
-                      <span>${exp.company} — <span class="font-normal italic text-slate-600">${exp.role}</span></span>
-                      <span class="text-[10px] text-slate-500 font-normal">${exp.period}</span>
+                      <span>${escapeHTML(exp.company)} — <span class="font-normal italic text-slate-600">${escapeHTML(exp.role)}</span></span>
+                      <span class="text-[10px] text-slate-500 font-normal">${escapeHTML(exp.period)}</span>
                     </div>
                     <ul class="list-disc list-inside text-slate-600 mt-1 space-y-0.5 pl-1">
-                      ${exp.description ? exp.description.split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
+                      ${exp.description ? escapeHTML(exp.description).split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
                     </ul>
                   </div>
                 `).join('')}
@@ -715,10 +762,10 @@
                 ${educations.map(edu => `
                   <div class="text-[11px] flex justify-between">
                     <div>
-                      <span class="font-bold text-slate-800">${edu.school}</span>
-                      <span class="text-slate-600"> — ${edu.degree}</span>
+                      <span class="font-bold text-slate-800">${escapeHTML(edu.school)}</span>
+                      <span class="text-slate-600"> — ${escapeHTML(edu.degree)}</span>
                     </div>
-                    <span class="text-[10px] text-slate-500">${edu.year}</span>
+                    <span class="text-[10px] text-slate-500">${escapeHTML(edu.year)}</span>
                   </div>
                 `).join('')}
               </div>
@@ -780,11 +827,11 @@
                   ${experiences.map(exp => `
                     <div class="text-[11px] border-b border-slate-100 pb-2">
                       <div class="flex justify-between font-bold text-slate-900">
-                        <span>${exp.role} — <span style="color:${accentColor}">${exp.company}</span></span>
-                        <span class="text-[10px] text-slate-500">${exp.period}</span>
+                        <span>${escapeHTML(exp.role)} — <span style="color:${accentColor}">${escapeHTML(exp.company)}</span></span>
+                        <span class="text-[10px] text-slate-500">${escapeHTML(exp.period)}</span>
                       </div>
                       <ul class="list-disc list-inside text-slate-600 mt-1 space-y-0.5">
-                        ${exp.description ? exp.description.split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
+                        ${exp.description ? escapeHTML(exp.description).split('\n').map(l => l.trim() ? `<li>${l.replace(/^•\s*/, '')}</li>` : '').join('') : ''}
                       </ul>
                     </div>
                   `).join('')}
@@ -798,10 +845,10 @@
                   ${educations.map(edu => `
                     <div class="text-[11px] flex justify-between">
                       <div>
-                        <span class="font-bold text-slate-800">${edu.school}</span>
-                        <p class="text-slate-600">${edu.degree}</p>
+                        <span class="font-bold text-slate-800">${escapeHTML(edu.school)}</span>
+                        <p class="text-slate-600">${escapeHTML(edu.degree)}</p>
                       </div>
-                      <span class="text-[10px] text-slate-500">${edu.year}</span>
+                      <span class="text-[10px] text-slate-500">${escapeHTML(edu.year)}</span>
                     </div>
                   `).join('')}
                 </div>
